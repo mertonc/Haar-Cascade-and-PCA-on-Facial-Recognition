@@ -1,0 +1,56 @@
+
+import imutils
+import cv2
+import os
+import glob
+from PIL import Image
+import numpy as np
+detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+from imutils import build_montages
+import math
+
+count=0
+detect_face=0
+count_face=0
+faces_collect = []
+#process to detect the faces from a list of photos located at a certain location
+for img_location in glob.glob("/Users/yana/Desktop/py/sample/*.pgm"):
+    print(img_location)
+    image = cv2.imread(img_location)
+    image = imutils.resize(image, width=500)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    rects = detector.detectMultiScale(gray, scaleFactor=1.05,
+            minNeighbors=16, minSize=(10, 10),
+            flags=cv2.CASCADE_SCALE_IMAGE)
+    print("{} faces detected...".format(len(rects)))
+    count=count+1
+    #save all detected faces in a list
+    count_face=count_face+len(rects)
+
+    if len(rects)==0:
+        continue
+    else:
+#cut out all the faces which were detected
+        detect_face=detect_face+1
+        for (x, y, w, h) in rects:    
+            
+            crop_img = image[y:y+h+20, x:x+w+20]
+            crop_img = imutils.resize(crop_img, width=95,height=105)
+            faces_collect.append(crop_img)
+            #cv2.imshow("cropped", crop_img)
+        for (x, y, w, h) in rects:    
+                
+            cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            
+        if not cv2.imwrite(os.path.join(os.path.expanduser('~'),'Desktop/py/sample2','s'+str(count)+'.png'), image):
+            raise Exception
+        
+print("sample count:",count,",how many contain faces:",detect_face,",how many faces were detacted",count_face)
+im_shape = (249,296)
+montage_shape = (10,max(math.ceil(count_face/10),5))
+montages=build_montages(faces_collect, im_shape, montage_shape)
+#show all the identified faces in one picture
+for montage in montages:
+    cv2.imshow("Montage", montage)
+
